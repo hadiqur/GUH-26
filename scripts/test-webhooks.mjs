@@ -25,6 +25,15 @@ const TOOLS = ['registerUser', 'sendEmail', 'sendText', 'setReminder'];
 const UNKNOWN_CALLER = '+447700900999'; // drama number, never seeded
 const NOBODY = 'Zebedee Nobody';
 
+if (process.env.NODE_TEST_CONTEXT) {
+  // `node --test` finds this file by its name (test-*). It needs live webhooks, so skip it there.
+  const { test } = await import('node:test');
+  test('webhook checks: run node scripts/test-webhooks.mjs', { skip: 'needs live n8n webhooks' }, () => {});
+} else {
+  await main();
+}
+
+async function main() {
 // --- .env (tiny parser: KEY=value, # comments, optional quotes) --------------
 
 function loadEnv(file) {
@@ -215,3 +224,4 @@ const count = (k) => results.filter((r) => r.result === k).length;
 console.log(`\n${count('PASS')} passed, ${count('FAIL')} failed, ${count('SKIP')} skipped`);
 // exitCode, not process.exit(): exiting while fetch sockets close crashes Node on Windows.
 process.exitCode = count('FAIL') ? 1 : 0;
+}
