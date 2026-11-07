@@ -1,7 +1,13 @@
+# Databases (app/db.py writes to data/ by default)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
 # Local dev database for the dashboard
 dev.db
 dev.db-*
-*.db-journal
 
 # Secrets
 .env
