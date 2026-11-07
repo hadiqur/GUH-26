@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en-GB" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__ASSISTANT__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='2' width='18' height='28' rx='3' fill='%23141414'/%3E%3Crect x='10' y='6' width='12' height='8' rx='1' fill='%23ff6a1a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@600;900&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Instrument palette: neutral hardware body, black ink, one signal colour. */
+  --body: oklch(0.945 0 0);
+  --panel: oklch(0.99 0 0);
+  --panel-2: oklch(0.965 0 0);
+  --ink: oklch(0.17 0 0);
+  --ink-2: oklch(0.38 0 0);
+  --line: oklch(0.83 0 0);
+  --line-strong: oklch(0.17 0 0);
+  --signal: oklch(0.69 0.2 42);
+  --signal-ink: oklch(0.5 0.17 40);
+  --signal-wash: oklch(0.93 0.06 50);
+  --danger: oklch(0.5 0.19 27);
+  --danger-wash: oklch(0.94 0.04 27);
+  --focus: oklch(0.69 0.2 42);
+  --font-ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-dot: "Doto", var(--font-mono);
+  --r: 8px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --z-sticky: 10; --z-toast: 30;
+  color-scheme: light;
+}
+/* Light is the default (projector-friendly); the status-bar toggle switches to dark. */
+:root[data-theme="dark"] {
+    --body: oklch(0.16 0 0); --panel: oklch(0.2 0 0); --panel-2: oklch(0.235 0 0);
+    --ink: oklch(0.96 0 0); --ink-2: oklch(0.76 0 0); --line: oklch(0.33 0 0); --line-strong: oklch(0.85 0 0);
+    --signal: oklch(0.72 0.19 45); --signal-ink: oklch(0.78 0.16 48); --signal-wash: oklch(0.3 0.07 45);
+    --danger: oklch(0.72 0.16 25); --danger-wash: oklch(0.3 0.07 25);
+    color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 18px; -webkit-text-size-adjust: 100%; }
+@media (min-width: 1400px) { html { font-size: 20px; } }
+body { margin: 0; background: var(--body); color: var(--ink); font-family: var(--font-ui); line-height: 1.5; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; text-wrap: pretty; }
+.shell { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.mono { font-family: var(--font-mono); }
+.dot { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.sub { color: var(--ink-2); }
+
+/* ---- status bar ---- */
+.bar { position: sticky; top: 0; z-index: var(--z-sticky); background: var(--body); border-bottom: 1px solid var(--line); }
+.bar .shell { display: flex; align-items: center; gap: 1rem; height: 3.25rem; }
+.mark { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-dot); font-weight: 900; font-size: 1.35rem; letter-spacing: 0.08em; }
+.mark i { width: 0.7rem; height: 1.15rem; border-radius: 2px; background: var(--ink); position: relative; }
+.mark i::after { content: ""; position: absolute; inset: 0.18rem 0.14rem auto; height: 0.36rem; border-radius: 1px; background: var(--signal); }
+.status { margin-left: auto; display: flex; align-items: center; gap: 1.1rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-2); }
+.bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 0.8rem; }
+.bars span { width: 3px; background: var(--ink); border-radius: 1px; }
+.bars span:nth-child(1) { height: 25%; } .bars span:nth-child(2) { height: 50%; } .bars span:nth-child(3) { height: 75%; } .bars span:nth-child(4) { height: 100%; }
+.live { display: inline-flex; align-items: center; gap: 0.4rem; }
+.pulse { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--signal); position: relative; flex: none; }
+.pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--signal); animation: ping 2.4s var(--ease) infinite; }
+@keyframes ping { 0% { transform: scale(1); opacity: 0.6; } 70%, 100% { transform: scale(2.8); opacity: 0; } }
+.theme { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--panel); cursor: pointer; padding: 0; }
+.theme span { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 1.5px solid var(--ink); background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
+.clock { font-family: var(--font-dot); font-weight: 900; font-size: 1rem; color: var(--ink); letter-spacing: 0.06em; }
+
+/* ---- dial module (the hero) ---- */
+.dial { padding: 2.5rem 0 1.75rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem 2rem; align-items: end; }
+.dial-number { display: block; font-size: clamp(2.4rem, 7vw, 4.75rem); line-height: 0.95; color: var(--ink); text-decoration: none; margin-top: 0.6rem; white-space: nowrap; }
+.dial-number:hover { color: var(--signal-ink); }
+.dial-meta { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 720px) { .dial { grid-template-columns: 1fr; } .dial-meta { justify-content: flex-start; } }
+
+/* ---- keys (buttons) ---- */
+.key {
+  --key-bg: var(--panel); --key-ink: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 2.75rem; padding: 0.5rem 1.1rem; border-radius: var(--r);
+  border: 1px solid var(--line-strong); background: var(--key-bg); color: var(--key-ink);
+  box-shadow: 0 3px 0 var(--line-strong);
+  font: 600 0.95rem/1 var(--font-ui); cursor: pointer; text-decoration: none;
+  transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), background-color 160ms var(--ease);
+  margin-bottom: 3px;
+}
+.key:hover { --key-bg: var(--panel-2); }
+.key:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line-strong); }
+.key:disabled { opacity: 0.55; cursor: progress; transform: none; }
+.key-signal { --key-bg: var(--signal); --key-ink: oklch(0.15 0 0); }
+.key-signal:hover { --key-bg: oklch(0.73 0.19 45); }
+.key-danger { --key-ink: var(--danger); }
+.key-danger:hover { --key-bg: var(--danger-wash); }
+.key-sm { min-height: 2.4rem; padding: 0.35rem 0.85rem; font-size: 0.85rem; }
+.key-wide { width: 100%; }
+.linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+
+/* ---- keypad tabs ---- */
+.keypad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; padding-bottom: 2rem; border-bottom: 1px solid var(--line); }
+.keypad button {
+  text-align: left; padding: 0.7rem 0.9rem 0.75rem; min-height: 3.6rem;
+  border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--panel); color: var(--ink);
+  box-shadow: 0 3px 0 var(--line-strong); cursor: pointer; font: 600 1rem/1.2 var(--font-ui);
+  display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 3px;
+  transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), background-color 160ms var(--ease);
+}
+.keypad button .n { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; color: var(--ink-2); }
+.keypad button:hover { background: var(--panel-2); }
+.keypad button[aria-selected="true"] { background: var(--ink); color: var(--body); transform: translateY(3px); box-shadow: 0 0 0 var(--line-strong); }
+.keypad button[aria-selected="true"] .n { color: var(--signal); }
+@media (max-width: 560px) { .keypad { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+main { padding: 2.25rem 0 4rem; }
+[data-view] { animation: viewIn 220ms var(--ease); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---- overview ---- */
+.greet h1 { font-size: 2.1rem; }
+.greet p { margin-top: 0.4rem; max-width: 60ch; }
+.readout { margin: 1.75rem 0 2.5rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r); }
+.readout > div { padding: 1rem 1.25rem 1.1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.readout > div + div { border-left: 1px solid var(--line); }
+.readout .dot { font-size: 2.6rem; line-height: 1; }
+.readout .on { color: var(--signal-ink); }
+@media (max-width: 560px) { .readout { grid-template-columns: 1fr; } .readout > div + div { border-left: 0; border-top: 1px solid var(--line); } }
+
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 2.5rem; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+.section-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.9rem; }
+.section-head h2 { font-size: 1.2rem; }
+.section-head .key, .section-head .linkish { margin-left: auto; }
+
+.say { list-style: none; margin: 0; padding: 0; }
+.say li { display: flex; gap: 0.85rem; align-items: baseline; padding: 0.7rem 0; border-top: 1px solid var(--line); }
+.say li:last-child { border-bottom: 1px solid var(--line); }
+.say .q { font-size: 1.05rem; }
+.say .k { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-2); min-width: 1.6rem; }
+.note { margin-top: 0.9rem; font-size: 0.9rem; color: var(--ink-2); max-width: 52ch; }
+
+/* ---- rows (contacts, reminders) ---- */
+.rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
+.rows li { display: grid; align-items: center; gap: 0.5rem 1.25rem; padding: 0.95rem 0.5rem; border-bottom: 1px solid var(--line); border-radius: 4px; }
+.rows .empty { display: block; color: var(--ink-2); padding: 1.25rem 0.5rem; }
+.rows li.is-new { animation: arrive 2.6s var(--ease); }
+@keyframes arrive { 0%, 35% { background: var(--signal-wash); } 100% { background: transparent; } }
+
+.log li { grid-template-columns: 7.5rem minmax(0, 1fr) auto; }
+.log .when { font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.3; color: var(--ink-2); }
+.log .when b { display: block; font-family: var(--font-dot); font-weight: 900; font-size: 1.25rem; color: var(--ink); letter-spacing: 0.04em; }
+.log .what { font-weight: 500; font-size: 1.05rem; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .log li { grid-template-columns: 1fr auto; } .log .what { grid-column: 1 / -1; grid-row: 1; } }
+
+.state { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.state::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1.5px solid currentColor; }
+.state.queued { color: var(--signal-ink); border-color: currentColor; }
+.state.queued::before { background: var(--signal); border-color: var(--signal); }
+.state.sent { color: var(--ink-2); }
+.state.sent::before { background: currentColor; }
+
+.people li { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; }
+.people .who { font-weight: 600; font-size: 1.05rem; overflow-wrap: anywhere; }
+.tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.tag { font-family: var(--font-mono); font-size: 0.72rem; padding: 0.1rem 0.5rem; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); }
+.people .how { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-2); line-height: 1.6; overflow-wrap: anywhere; }
+.people .how span { display: block; }
+.people .acts { display: flex; gap: 0.5rem; }
+@media (max-width: 720px) { .people li { grid-template-columns: 1fr; } }
+
+/* ---- forms ---- */
+.panel { background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r); padding: 1.4rem; }
+.editor { margin-bottom: 1.5rem; animation: viewIn 220ms var(--ease); }
+.editor h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+@media (max-width: 640px) { .fields { grid-template-columns: 1fr; } }
+.field label, .field .lbl { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+.hint { display: block; font-weight: 400; font-size: 0.85rem; color: var(--ink-2); margin-top: 0.1rem; }
+input[type=text], input[type=tel], input[type=email] {
+  width: 100%; min-height: 2.9rem; padding: 0.55rem 0.8rem; font: 400 1rem var(--font-ui); color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r);
+  transition: box-shadow 160ms var(--ease);
+}
+input::placeholder { color: var(--ink-2); opacity: 0.8; }
+input:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+.actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; margin-top: 1.25rem; }
+.err { color: var(--danger); background: var(--danger-wash); border: 1px solid currentColor; border-radius: var(--r); padding: 0.65rem 0.9rem; margin-bottom: 1rem; font-weight: 500; }
+
+.settings { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 2rem; align-items: start; }
+@media (max-width: 860px) { .settings { grid-template-columns: 1fr; } }
+.settings .field { padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+.settings .field:first-of-type { padding-top: 0; }
+.field label.check { display: flex; gap: 0.8rem; align-items: flex-start; cursor: pointer; font-weight: 400; }
+.check input { width: 1.35rem; height: 1.35rem; margin: 0.15rem 0 0; accent-color: var(--signal); flex: none; }
+.gmail { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.3rem; font-weight: 500; }
+
+/* ---- login ---- */
+.gate { min-height: 100dvh; display: grid; place-items: center; padding: 2rem 16px; }
+.gate-box { width: min(440px, 100%); }
+.gate .mark { font-size: 2.6rem; gap: 0.9rem; margin-bottom: 2rem; }
+.gate .mark i { width: 1.25rem; height: 2.05rem; }
+.gate .mark i::after { inset: 0.3rem 0.25rem auto; height: 0.65rem; }
+.gate h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.gate p.sub { margin-bottom: 1.5rem; }
+.gate .field { margin-bottom: 1.25rem; }
+.code-input { font-family: var(--font-dot) !important; font-weight: 900 !important; font-size: 2.4rem !important; letter-spacing: 0.35em; text-align: center; min-height: 4.2rem !important; padding-left: 0.35em !important; }
+.gate-foot { margin-top: 1.5rem; font-size: 0.9rem; color: var(--ink-2); }
+
+.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: var(--z-toast); background: var(--ink); color: var(--body); padding: 0.7rem 1.15rem; border-radius: var(--r); font-weight: 500; max-width: calc(100vw - 32px); animation: viewIn 200ms var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+  .pulse::after { display: none; }
+  .rows li.is-new { animation: none; background: var(--signal-wash); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ Login ============ -->
+<section id="login" class="gate" hidden>
+  <div class="gate-box">
+    <div class="mark"><i aria-hidden="true"></i>__ASSISTANT__</div>
+    <div id="login-error" class="err" role="alert" hidden></div>
+
+    <form id="phone-form">
+      <h1>Log in with your mobile</h1>
+      <p class="sub">We'll text you a 6-digit code. It works on any phone.</p>
+      <div class="field">
+        <label for="phone">Mobile number</label>
+        <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="07700 900123" required>
+      </div>
+      <button class="key key-signal key-wide" type="submit">Text me a code</button>
+    </form>
+
+    <form id="code-form" hidden>
+      <h1>Enter the code</h1>
+      <p class="sub">Sent to <strong id="code-phone" class="mono"></strong>. It lasts 10 minutes.</p>
+      <div class="field">
+        <label for="code">6-digit code</label>
+        <input id="code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="\d{6}" required>
+      </div>
+      <button class="key key-signal key-wide" type="submit">Log in</button>
+      <p class="gate-foot"><button class="linkish" type="button" id="change-number">Use a different number</button></p>
+    </form>
+
+    <form id="name-form" hidden>
+      <h1>What's your first name?</h1>
+      <p class="sub">Texts you send through __ASSISTANT__ start with it, like "Adam: on my way".</p>
+      <div class="field">
+        <label for="reg-name">First name</label>
+        <input id="reg-name" type="text" autocomplete="given-name" required>
+      </div>
+      <button class="key key-signal key-wide" type="submit">Create my account</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ App ============ -->
+<div id="app" hidden>
+  <header class="bar">
+    <div class="shell">
+      <div class="mark"><i aria-hidden="true"></i>__ASSISTANT__</div>
+      <div class="status">
+        <span class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span class="live" title="This page updates by itself while you're on a call"><span class="pulse" aria-hidden="true"></span>Live</span>
+        <span class="clock" id="clock" aria-label="UK time"></span>
+        <button class="theme" id="theme" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span aria-hidden="true"></span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <section class="dial" aria-label="Call __ASSISTANT__">
+      <div>
+        <span class="label">Call from any phone</span>
+        <a class="dial-number dot" id="service-number" href="tel:">-- --</a>
+      </div>
+      <div class="dial-meta">
+        <a class="key key-signal" id="dial-key" href="tel:">Call now</a>
+        <button class="key" type="button" id="copy-number">Copy number</button>
+      </div>
+    </section>
+
+    <nav class="keypad" role="tablist" aria-label="Account sections">
+      <button role="tab" data-tab="overview" aria-selected="true"><span class="n">1</span>Overview</button>
+      <button role="tab" data-tab="contacts"><span class="n">2</span>Contacts</button>
+      <button role="tab" data-tab="reminders"><span class="n">3</span>Reminders</button>
+      <button role="tab" data-tab="settings"><span class="n">4</span>Settings</button>
+    </nav>
+
+    <main>
+      <!-- Overview -->
+      <section data-view="overview">
+        <div class="greet">
+          <h1 id="hello">Hello.</h1>
+          <p class="sub" id="greet-sub"></p>
+        </div>
+        <div class="readout" role="group" aria-label="Your account at a glance">
+          <div><span class="label">Contacts</span><span class="dot" id="stat-contacts">00</span></div>
+          <div><span class="label">Reminders queued</span><span class="dot" id="stat-pending">00</span></div>
+          <div><span class="label">Gmail</span><span class="dot" id="stat-email">--</span></div>
+        </div>
+        <div class="split">
+          <div>
+            <div class="section-head"><h2>Things to say</h2></div>
+            <ul class="say">
+              <li><span class="k">01</span><span class="q">"Remind me at 8pm to call the dentist."</span></li>
+              <li><span class="k">02</span><span class="q">"Text Mum, I'm on my way."</span></li>
+              <li><span class="k">03</span><span class="q">"Email Sarah that I'll be late tomorrow."</span></li>
+              <li><span class="k">04</span><span class="q">"Read my emails."</span></li>
+            </ul>
+            <p class="note">__ASSISTANT__ reads every email and text back to you and only sends it after you say yes.</p>
+          </div>
+          <div>
+            <div class="section-head"><h2>Coming up</h2><button class="linkish" data-go="reminders">All reminders</button></div>
+            <ul class="rows log" id="next-reminders"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contacts -->
+      <section data-view="contacts" hidden>
+        <div class="section-head"><h2>Contacts</h2><button class="key key-signal key-sm" id="add-contact">Add contact</button></div>
+        <form class="panel editor" id="contact-form" hidden>
+          <h3 id="contact-title">New contact</h3>
+          <div id="contact-error" class="err" role="alert" hidden></div>
+          <div class="fields">
+            <div class="field"><label for="c-name">Name</label><input id="c-name" type="text" required></div>
+            <div class="field"><label for="c-aliases">Nicknames <span class="hint">Other names you might say, e.g. Mum, Mom</span></label><input id="c-aliases" type="text"></div>
+            <div class="field"><label for="c-phone">Mobile number</label><input id="c-phone" type="tel" inputmode="tel" placeholder="07700 900123"></div>
+            <div class="field"><label for="c-email">Email</label><input id="c-email" type="email" placeholder="name@example.com"></div>
+          </div>
+          <div class="actions">
+            <button class="key" type="button" id="contact-cancel">Cancel</button>
+            <button class="key key-signal" type="submit" id="contact-save">Save contact</button>
+          </div>
+        </form>
+        <ul class="rows people" id="contacts"></ul>
+      </section>
+
+      <!-- Reminders -->
+      <section data-view="reminders" hidden>
+        <div class="section-head"><h2>Reminders</h2></div>
+        <p class="sub" style="margin:-0.4rem 0 1.1rem">Set by voice. Each one arrives as a text at the time you asked for, even after you hang up.</p>
+        <ul class="rows log" id="reminders"></ul>
+      </section>
+
+      <!-- Settings -->
+      <section data-view="settings" hidden>
+        <div class="settings">
+          <form id="settings-form">
+            <div class="section-head"><h2>How __ASSISTANT__ sends for you</h2></div>
+            <div class="field">
+              <label for="set-name">Your name <span class="hint">Texts start with this, like "Adam: on my way".</span></label>
+              <input id="set-name" type="text" required>
+            </div>
+            <div class="field">
+              <label for="set-signature">Email sign-off <span class="hint">Added to the end of every email you send by voice.</span></label>
+              <input id="set-signature" type="text" maxlength="200">
+            </div>
+            <div class="field">
+              <label class="check"><input id="set-intl" type="checkbox"><span><strong>Allow texts to non-UK numbers</strong><span class="hint">International texts cost more to send.</span></span></label>
+            </div>
+            <div class="actions" style="justify-content:flex-start"><button class="key key-signal" type="submit">Save settings</button></div>
+          </form>
+          <div class="panel">
+            <span class="label">Gmail</span>
+            <p class="gmail" id="gmail-status"></p>
+            <p class="sub" id="gmail-note" style="margin-top:0.4rem;font-size:0.9rem"></p>
+            <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0">
+            <span class="label">Logged in as</span>
+            <p class="mono" id="me-phone" style="margin:0.3rem 0 1rem;font-size:1.05rem"></p>
+            <button class="key key-sm" id="logout">Log out</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+const API = '__API_BASE__/brick';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const state = { token: null, data: null, pending: null, editing: null, seen: null };
+
+// Served from a sandboxed n8n webhook where storage may be blocked, so the session lives in the URL hash.
+function saveToken(t) {
+  state.token = t;
+  history.replaceState(null, '', t ? '#t=' + encodeURIComponent(t) : location.pathname + location.search);
+  try { t ? localStorage.setItem('brick_token', t) : localStorage.removeItem('brick_token'); } catch (e) {}
+}
+function loadToken() {
+  const m = location.hash.match(/t=([^&]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  try { return localStorage.getItem('brick_token'); } catch (e) { return null; }
+}
+
+async function call(path, body) {
+  const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, token: state.token }) };
+  const url = API + path + (body === undefined ? (path.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(state.token || '') : '');
+  const res = await fetch(url, opts);
+  let json = {};
+  try { json = await res.json(); } catch (e) {}
+  if (!res.ok && !json.status) json = { status: 'error', message: 'Something went wrong. Please try again.' };
+  if (json.status === 'unauthorised') { logout(); throw new Error(json.message); }
+  return json;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const prettyPhone = p => { const d = String(p || '').replace(/\D/g, ''); return d.startsWith('44') && d.length === 12 ? `0${d.slice(2, 6)} ${d.slice(6)}` : (p || ''); };
+const pad2 = n => String(n).padStart(2, '0');
+const ukTime = d => d.toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' });
+const ukDay = d => {
+  const key = x => x.toLocaleDateString('en-GB', { timeZone: 'Europe/London' });
+  const now = new Date(), tom = new Date(Date.now() + 864e5);
+  if (key(d) === key(now)) return 'Today';
+  if (key(d) === key(tom)) return 'Tomorrow';
+  return d.toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short' });
+};
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3000); }
+function busy(btn, on) { if (btn) btn.disabled = on; }
+function showError(el, msg) { el.textContent = msg || ''; el.hidden = !msg; }
+function tick() { $('#clock').textContent = ukTime(new Date()); }
+
+/* ---------- login ---------- */
+function showLogin(step) {
+  $('#app').hidden = true; $('#login').hidden = false;
+  for (const id of ['phone-form', 'code-form', 'name-form']) $('#' + id).hidden = id !== step;
+  showError($('#login-error'));
+  setTimeout(() => $('#' + step + ' input').focus(), 0);
+}
+const offline = () => showError($('#login-error'), "Couldn't reach Brick. Check your connection and try again.");
+$('#phone-form').addEventListener('submit', async e => {
+  e.preventDefault(); const btn = e.submitter; busy(btn, true);
+  try {
+    const r = await call('/auth/request-code', { phone: $('#phone').value });
+    if (r.status !== 'sent') return showError($('#login-error'), r.message);
+    state.pending = r; $('#code-phone').textContent = prettyPhone(r.phone); $('#code').value = '';
+    showLogin('code-form');
+  } catch (err) { offline(); } finally { busy(btn, false); }
+});
+$('#code-form').addEventListener('submit', async e => {
+  e.preventDefault(); const btn = e.submitter; busy(btn, true);
+  try {
+    const r = await call('/auth/verify', { phone: state.pending.phone, exp: state.pending.exp, code: $('#code').value });
+    if (r.status !== 'ok') return showError($('#login-error'), r.message);
+    saveToken(r.token);
+    if (r.registered) start(); else showLogin('name-form');
+  } catch (err) { offline(); } finally { busy(btn, false); }
+});
+$('#name-form').addEventListener('submit', async e => {
+  e.preventDefault(); const btn = e.submitter; busy(btn, true);
+  try {
+    const r = await call('/register', { name: $('#reg-name').value });
+    if (r.status !== 'registered' && r.status !== 'exists') return showError($('#login-error'), r.message);
+    start();
+  } catch (err) { offline(); } finally { busy(btn, false); }
+});
+$('#change-number').addEventListener('click', () => showLogin('phone-form'));
+function logout() { saveToken(null); state.data = null; state.seen = null; clearInterval(state.timer); showLogin('phone-form'); }
+$('#logout').addEventListener('click', logout);
+
+/* ---------- tabs (also keys 1-4, like the phone keypad) ---------- */
+const TABS = ['overview', 'contacts', 'reminders', 'settings'];
+function setTab(name) {
+  $$('.keypad button').forEach(b => { const on = b.dataset.tab === name; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+  $$('[data-view]').forEach(v => v.hidden = v.dataset.view !== name);
+}
+$$('.keypad button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+$$('[data-go]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.go)));
+document.addEventListener('keydown', e => {
+  if ($('#app').hidden || e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  const i = Number(e.key) - 1;
+  if (i >= 0 && i < TABS.length) { setTab(TABS[i]); $(`.keypad [data-tab="${TABS[i]}"]`).focus(); }
+});
+
+/* ---------- data ---------- */
+async function refresh() {
+  const d = await call('/dashboard');
+  if (d.status !== 'ok') return;
+  if (!d.user) return showLogin('name-form');
+  const first = !state.data;
+  state.data = d;
+  render(first);
+}
+
+function reminderRow(r, fresh) {
+  const queued = r.status === 'pending', t = new Date(r.remind_at);
+  return `<li class="${fresh ? 'is-new' : ''}">
+    <div class="when"><b>${esc(ukTime(t))}</b>${esc(ukDay(t))}</div>
+    <div class="what">${esc(r.text)}</div>
+    <span class="state ${queued ? 'queued' : 'sent'}">${queued ? 'Queued' : 'Sent'}</span></li>`;
+}
+
+function render(first) {
+  const { user, contacts, reminders, service_number } = state.data;
+  const num = prettyPhone(service_number);
+  $('#service-number').textContent = num || 'Not set';
+  for (const a of [$('#service-number'), $('#dial-key')]) a.href = 'tel:' + (service_number || '');
+  $('#hello').textContent = `Hello, ${user.name}.`;
+  $('#greet-sub').textContent = `Call ${num} from ${prettyPhone(user.phone)} and __ASSISTANT__ knows it's you. Anything you set up by voice appears here as it happens.`;
+  $('#me-phone').textContent = prettyPhone(user.phone);
+
+  // New rows since the last refresh get a brief highlight, so changes made on a call are visible.
+  const seen = state.seen;
+  const ids = new Set([...contacts.map(c => 'c' + c.id + c.name), ...reminders.map(r => 'r' + r.id)]);
+  const fresh = key => seen && !seen.has(key);
+  state.seen = ids;
+
+  const pending = reminders.filter(r => r.status === 'pending').sort((a, b) => String(a.remind_at).localeCompare(String(b.remind_at)));
+  $('#stat-contacts').textContent = pad2(contacts.length);
+  $('#stat-pending').textContent = pad2(pending.length);
+  $('#stat-email').textContent = user.email_connected ? 'ON' : 'OFF';
+  $('#stat-email').classList.toggle('on', !!user.email_connected);
+
+  const upcoming = pending.slice(0, 4);
+  $('#next-reminders').innerHTML = upcoming.map(r => reminderRow(r, fresh('r' + r.id))).join('')
+    || '<li class="empty">Nothing queued. Call and say "Remind me at…"</li>';
+  $('#reminders').innerHTML = reminders.map(r => reminderRow(r, fresh('r' + r.id))).join('')
+    || '<li class="empty">No reminders yet. Call and say "Remind me in ten minutes to…"</li>';
+
+  $('#contacts').innerHTML = contacts.map(c => {
+    const tags = String(c.aliases || '').split(',').map(s => s.trim()).filter(Boolean);
+    return `<li class="${fresh('c' + c.id + c.name) ? 'is-new' : ''}">
+      <div><div class="who">${esc(c.name)}</div>${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}</div>
+      <div class="how">${c.phone ? `<span>${esc(prettyPhone(c.phone))}</span>` : ''}${c.email ? `<span>${esc(c.email)}</span>` : ''}</div>
+      <div class="acts"><button class="key key-sm" data-edit="${c.id}" aria-label="Edit ${esc(c.name)}">Edit</button>
+      <button class="key key-sm key-danger" data-del="${c.id}" aria-label="Delete ${esc(c.name)}">Delete</button></div></li>`;
+  }).join('') || '<li class="empty">No contacts yet. Add one here, or say "Save a contact" on a call.</li>';
+
+  // Don't overwrite the settings form while someone is typing in it.
+  if (first || !$('#settings-form').contains(document.activeElement)) {
+    $('#set-name').value = user.name;
+    $('#set-signature').value = user.email_signature || '';
+    $('#set-intl').checked = !!user.allow_international;
+  }
+  $('#gmail-status').innerHTML = user.email_connected
+    ? '<span class="state queued">Connected</span>' : '<span class="state sent">Not connected</span>';
+  $('#gmail-note').textContent = user.email_connected
+    ? 'You can send emails and hear your unread ones by voice.'
+    : 'For the demo, one Gmail account is linked by the Brick team.';
+}
+
+/* ---------- contacts ---------- */
+function openEditor(c) {
+  state.editing = c || null;
+  $('#contact-title').textContent = c ? `Edit ${c.name}` : 'New contact';
+  $('#contact-save').textContent = c ? 'Save changes' : 'Save contact';
+  $('#c-name').value = c ? c.name : ''; $('#c-aliases').value = c ? c.aliases : '';
+  $('#c-phone').value = c ? prettyPhone(c.phone) : ''; $('#c-email').value = c ? c.email : '';
+  showError($('#contact-error'));
+  $('#contact-form').hidden = false; $('#c-name').focus();
+}
+function closeEditor() { $('#contact-form').hidden = true; state.editing = null; }
+$('#add-contact').addEventListener('click', () => openEditor(null));
+$('#contact-cancel').addEventListener('click', closeEditor);
+$('#contact-form').addEventListener('keydown', e => { if (e.key === 'Escape') closeEditor(); });
+$('#contacts').addEventListener('click', async e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  const id = btn.dataset.edit || btn.dataset.del;
+  const c = state.data.contacts.find(x => String(x.id) === id);
+  if (!c) return;
+  if (btn.dataset.edit) return openEditor(c);
+  if (!confirm(`Delete ${c.name}? Brick won't recognise this name on calls any more.`)) return;
+  busy(btn, true);
+  try {
+    const r = await call('/contacts/delete', { id: c.id, match_name: c.name });
+    toast(r.status === 'deleted' ? `Deleted ${c.name}` : r.message);
+    setTimeout(refresh, 1500);
+  } catch (err) { toast("Couldn't delete. Try again."); busy(btn, false); }
+});
+$('#contact-form').addEventListener('submit', async e => {
+  e.preventDefault(); const btn = $('#contact-save'); busy(btn, true);
+  const fields = { name: $('#c-name').value, aliases: $('#c-aliases').value, phone: $('#c-phone').value, email: $('#c-email').value };
+  try {
+    const c = state.editing;
+    const r = c ? await call('/contacts/update', { id: c.id, match_name: c.name, ...fields }) : await call('/contacts', fields);
+    if (r.status !== 'saved') return showError($('#contact-error'), r.message);
+    closeEditor(); toast(`Saved ${r.name}`);
+    setTimeout(refresh, 1500);
+  } catch (err) { showError($('#contact-error'), "Couldn't save. Try again."); }
+  finally { busy(btn, false); }
+});
+
+/* ---------- settings ---------- */
+$('#settings-form').addEventListener('submit', async e => {
+  e.preventDefault(); const btn = e.submitter; busy(btn, true);
+  try {
+    const r = await call('/me', { name: $('#set-name').value, email_signature: $('#set-signature').value, allow_international: $('#set-intl').checked });
+    if (r.status !== 'saved') return toast(r.message);
+    Object.assign(state.data.user, r.user); render(false); toast('Settings saved');
+  } catch (err) { toast("Couldn't save. Try again."); }
+  finally { busy(btn, false); }
+});
+$('#copy-number').addEventListener('click', async () => {
+  const n = state.data && prettyPhone(state.data.service_number);
+  try { await navigator.clipboard.writeText(n); toast('Number copied'); } catch (e) { toast(n); }
+});
+
+function start() {
+  $('#login').hidden = true; $('#app').hidden = false; setTab('overview');
+  tick(); clearInterval(state.clock); state.clock = setInterval(tick, 10000);
+  refresh().catch(() => toast("Couldn't load your account."));
+  clearInterval(state.timer);
+  // Poll so changes made by voice on a call show up live.
+  state.timer = setInterval(() => { if (!document.hidden && $('#contact-form').hidden) refresh().catch(() => {}); }, 8000);
+}
+
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('#theme').setAttribute('aria-pressed', String(t === 'dark'));
+  $('#theme').setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  try { localStorage.setItem('brick_theme', t); } catch (e) {}
+}
+$('#theme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+try { const t = localStorage.getItem('brick_theme'); if (t) setTheme(t); } catch (e) {}
+
+state.token = loadToken();
+if (state.token) start(); else showLogin('phone-form');
+</script>
+</body>
+</html>

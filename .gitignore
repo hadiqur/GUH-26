@@ -9,3 +9,8 @@ node_modules/
 
 # Workflow exports that still contain secrets
 n8n/workflows/*.private.json
+
+# Brick backend: real secrets and generated workflows (they embed the secrets)
+backend/config.json
+backend/workflows/
+__pycache__/

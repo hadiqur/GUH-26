@@ -1,0 +1,14 @@
+{
+  "n8n_url": "https://YOUR-INSTANCE.app.n8n.cloud",
+  "n8n_api_key": "",
+  "sheet_id": "",
+  "google_sheets_credential_id": "",
+  "gmail_credential_id": "",
+  "tool_secret": "",
+  "email_signature": "Sent by voice from my brick phone",
+  "assistant_name": "Brick",
+  "vonage_api_key": "",
+  "vonage_api_secret": "",
+  "vonage_number": "",
+  "elevenlabs_api_key": ""
+}
