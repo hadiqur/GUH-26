@@ -1,20 +1,11 @@
-# Databases (app/db.py writes to data/ by default)
-data/
-*.db
-*.db-wal
-*.db-shm
-*.db-journal
-
-# Local dev database for the dashboard
-dev.db
-dev.db-*
-
 # Secrets
 .env
 
-# Python
-__pycache__/
-*.pyc
-.pytest_cache/
-.venv/
-venv/
+# Node
+node_modules/
+
+# Real demo data: keep it in the Google Sheet, or in local copies like these
+*.local.csv
+
+# Workflow exports that still contain secrets
+n8n/workflows/*.private.json

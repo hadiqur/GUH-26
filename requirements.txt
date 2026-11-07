@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-httpx
-phonenumbers
-rapidfuzz
-sse-starlette
-python-dotenv
-pytest
