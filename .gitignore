@@ -1,0 +1,14 @@
+# Local dev database for the dashboard
+dev.db
+dev.db-*
+*.db-journal
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

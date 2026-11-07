@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your account · Dial-a-Text</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a4fd6'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white'%3E%E2%98%8E%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/account/assets/styles.css">
+  <script type="module" src="/account/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">☎</span>Dial-a-Text</a>
+      <div class="call-cta">
+        <span class="label" id="call-label">Call to dictate a text</span>
+        <a id="service-number" href="tel:" aria-describedby="call-label">…</a>
+      </div>
+      <button class="btn btn-secondary btn-small" type="button" id="logout">Log out</button>
+    </div>
+    <nav class="tabs" aria-label="Account sections">
+      <a href="#overview" data-tab="overview">Overview</a>
+      <a href="#messages" data-tab="messages">Messages <span class="tab-count" id="unread-count" hidden></span></a>
+      <a href="#contacts" data-tab="contacts">Contacts</a>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section id="view-overview" data-view="overview" aria-labelledby="overview-title" hidden></section>
+    <section id="view-messages" data-view="messages" aria-labelledby="messages-title" hidden></section>
+    <section id="view-contacts" data-view="contacts" aria-labelledby="contacts-title" hidden></section>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>
