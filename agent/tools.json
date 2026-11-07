@@ -1,0 +1,80 @@
+{
+  "_note": "Reference for setting up each server (webhook) tool by hand in the ElevenLabs UI. This is NOT an ElevenLabs import file and the keys below are not ElevenLabs schema fields. URL = N8N_WEBHOOK_BASE + path. Store TOOL_SECRET as an ElevenLabs secret and send it in the X-Tool-Secret header. caller_phone must always come from the {{caller_phone}} dynamic variable, never from the model.",
+  "tools": [
+    {
+      "name": "register_user",
+      "description": "Register a new caller. Call this once, after a new caller tells you their first name.",
+      "method": "POST",
+      "path": "/register_user",
+      "headers": { "X-Tool-Secret": "<TOOL_SECRET>" },
+      "body_parameters": [
+        { "name": "caller_phone", "type": "string", "required": true, "value": "from dynamic variable {{caller_phone}}, never from the model" },
+        { "name": "name", "type": "string", "required": true, "value": "from the model", "description": "The caller's first name, as they said it." }
+      ],
+      "returns": [{ "status": "registered", "name": "Adam" }]
+    },
+    {
+      "name": "send_email",
+      "description": "Send an email from the caller's Gmail to one of their saved contacts. Only call this after reading the exact subject and message back to the caller and hearing a clear yes.",
+      "method": "POST",
+      "path": "/send_email",
+      "headers": { "X-Tool-Secret": "<TOOL_SECRET>" },
+      "body_parameters": [
+        { "name": "caller_phone", "type": "string", "required": true, "value": "from dynamic variable {{caller_phone}}, never from the model" },
+        { "name": "contact_name", "type": "string", "required": true, "value": "from the model", "description": "The contact's name as the caller said it, e.g. Sarah Khan or Mum." },
+        { "name": "subject", "type": "string", "required": true, "value": "from the model", "description": "A short subject line." },
+        { "name": "body", "type": "string", "required": true, "value": "from the model", "description": "The exact message the caller approved." }
+      ],
+      "returns": [
+        { "status": "sent", "to": "Sarah Khan" },
+        { "status": "ambiguous", "options": ["Sarah Khan", "Sarah Lee"] },
+        { "status": "not_found" }
+      ]
+    },
+    {
+      "name": "send_text",
+      "description": "Send a text message to one of the caller's contacts, or to a phone number. The text comes from the Brick number and starts with the caller's name. Only call this after reading the exact message back and hearing a clear yes.",
+      "method": "POST",
+      "path": "/send_text",
+      "headers": { "X-Tool-Secret": "<TOOL_SECRET>" },
+      "body_parameters": [
+        { "name": "caller_phone", "type": "string", "required": true, "value": "from dynamic variable {{caller_phone}}, never from the model" },
+        { "name": "contact_name", "type": "string", "required": true, "value": "from the model", "description": "The contact's name as the caller said it, or a phone number." },
+        { "name": "message", "type": "string", "required": true, "value": "from the model", "description": "The exact message the caller approved, without their name in front." }
+      ],
+      "returns": [
+        { "status": "sent", "parts": 1 },
+        { "status": "ambiguous", "options": ["Sarah Khan", "Sarah Lee"] },
+        { "status": "not_found" }
+      ]
+    },
+    {
+      "name": "set_reminder",
+      "description": "Set a reminder. At the given time the caller gets a text. Confirm the time out loud before calling. Reminders can be at most 7 days ahead.",
+      "method": "POST",
+      "path": "/set_reminder",
+      "headers": { "X-Tool-Secret": "<TOOL_SECRET>" },
+      "body_parameters": [
+        { "name": "caller_phone", "type": "string", "required": true, "value": "from dynamic variable {{caller_phone}}, never from the model" },
+        { "name": "text", "type": "string", "required": true, "value": "from the model", "description": "What to remind them about, e.g. take your tablets." },
+        { "name": "remind_at", "type": "string", "required": true, "value": "from the model", "description": "When, in ISO 8601 with an offset, worked out from {{now}}, e.g. 2026-11-07T20:00:00+00:00." }
+      ],
+      "returns": [
+        { "status": "set", "when": "8pm today" },
+        { "status": "invalid_time", "reason": "in_past" }
+      ]
+    },
+    {
+      "name": "read_emails",
+      "_optional": "Stretch goal from the plan.",
+      "description": "Read out the caller's unread emails: sender, subject and a one-line summary each.",
+      "method": "POST",
+      "path": "/read_emails",
+      "headers": { "X-Tool-Secret": "<TOOL_SECRET>" },
+      "body_parameters": [
+        { "name": "caller_phone", "type": "string", "required": true, "value": "from dynamic variable {{caller_phone}}, never from the model" }
+      ],
+      "returns": [{ "emails": [{ "from": "Sarah Khan", "subject": "Lunch", "snippet": "Are you free tomorrow?" }] }]
+    }
+  ]
+}

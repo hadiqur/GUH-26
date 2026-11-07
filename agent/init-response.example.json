@@ -1,0 +1,10 @@
+{
+  "type": "conversation_initiation_client_data",
+  "dynamic_variables": {
+    "caller_phone": "+447700900123",
+    "user_name": "Adam",
+    "is_new_user": false,
+    "contact_names": "Mum, Dad, Sarah Khan, Sarah Lee",
+    "now": "Saturday 7 November 2026, 14:30, Europe/London"
+  }
+}
